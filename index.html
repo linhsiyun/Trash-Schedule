@@ -300,8 +300,20 @@
         const [year, month] = renderMonth.split('-');
         
         const monthData = isArchiveMode ? archiveData : (allData[renderMonth] || {});
-        const shifts = isArchiveMode ? archiveData.shifts : (monthData.settings?.shifts || []);
         const checkboxes = isArchiveMode ? archiveData.checkboxes : (monthData.checkboxes || {});
+        
+        // 抓取「所有」的排班資料來比對，解決跨月顯示問題
+        let shifts = [];
+        if (isArchiveMode) {
+            shifts = archiveData.shifts || [];
+        } else {
+            // 把資料庫裡所有月份的 shifts 全部收集到一個大陣列裡面
+            Object.values(allData).forEach(m => {
+                if (m.settings && m.settings.shifts) {
+                    shifts.push(...m.settings.shifts);
+                }
+            });
+        }
         
         const body = document.getElementById('calendar-body');
         body.innerHTML = '';
@@ -309,7 +321,7 @@
         const lastDay = new Date(year, month, 0);
         const daysInMonth = lastDay.getDate();
         
-        // 將星期日轉換為第一天，配合簡化版的表頭 (日, 一, 二, 三, 四, 五, 六)
+        // 將星期一轉換為第一天，配合簡化版的表頭 (一, 二, 三, 四, 五, 六, 日)
         let startDayOfWeek = firstDay.getDay() - 1;
         if (startDayOfWeek === -1) startDayOfWeek = 6; 
         let date = 1; let weekCount = 0;
