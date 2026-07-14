@@ -84,7 +84,7 @@
         }
         .modal-message { 
             margin-bottom: 25px; font-size: 16px; color: #333; 
-            white-space: pre-line; line-height: 1.5; text-align: left;
+            white-space: pre-line; line-height: 1.5; text-align: left; font-weight: bold;
         }
         .modal-btn {
             background-color: #5A5C69; color: white; padding: 10px 30px;
@@ -100,7 +100,7 @@
     <div class="header">
         <div class="header-title">
             <input type="month" id="view-month" onchange="window.changeViewMonth(this.value)">
-            <h1 style="margin:0; font-size: 28px;">值日表 (ﾉ'ｰ')ﾉ︵⌒ð<span id="archive-status" class="status-badge badge-archive hidden">歷史唯讀</span></h1>
+            <h1 style="margin:0; font-size: 28px;">值日表 (ﾉ'ｰ')ﾉ︵ð<span id="archive-status" class="status-badge badge-archive hidden">歷史唯讀</span></h1>
         </div>
         <div class="header-buttons">
             <button id="fetch-archive-btn" class="btn-success" onclick="window.fetchArchiveFromGitHub()">載入歷史備份</button>
