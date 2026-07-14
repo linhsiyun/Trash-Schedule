@@ -7,11 +7,16 @@
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; background-color: #f5f5f5; }
         .container { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+        .header-title { display: flex; align-items: center; gap: 10px; }
+        .header-title input[type="month"] { font-size: 24px; font-weight: bold; border: 1px solid #ccc; border-radius: 4px; padding: 5px; font-family: inherit; }
+        .header-buttons { display: flex; gap: 10px; align-items: center; }
         button { padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
         button:hover { background-color: #0056b3; }
         .btn-secondary { background-color: #6c757d; }
         .btn-secondary:hover { background-color: #5a6268; }
+        .btn-danger { background-color: #dc3545; }
+        .btn-danger:hover { background-color: #c82333; }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; vertical-align: top; }
         th { background-color: #343a40; color: white; text-align: center; }
@@ -26,15 +31,29 @@
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
         select, input[type="month"], input[type="date"], input[type="text"] { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
-        .shift-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 14px; color: white; font-weight: bold; }
+        .badge-archive { background-color: #28a745; }
+        
+        /* 新版排班區塊樣式 */
+        .shift-row { border: 1px solid #dee2e6; padding: 15px; margin-bottom: 15px; border-radius: 8px; background-color: #f8f9fa; }
+        .shift-top { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 10px; }
+        .shift-bottom { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; font-size: 15px; background-color: #fff; padding: 10px; border-radius: 4px; border: 1px dashed #ccc; }
     </style>
 </head>
 <body>
 
 <div class="container" id="view-page">
     <div class="header">
-        <h1 id="calendar-title">載入中...</h1>
-        <button onclick="togglePage('edit-page')">進入編輯</button>
+        <div class="header-title">
+            <input type="month" id="view-month" onchange="window.changeViewMonth(this.value)">
+            <h1 style="margin:0;">排班表 <span id="archive-status" class="status-badge badge-archive hidden">歷史唯讀模式</span></h1>
+        </div>
+        <div class="header-buttons">
+            <input type="file" id="import-file" accept=".json" onchange="window.viewArchiveFile(this)" class="hidden">
+            <button class="btn-secondary" onclick="document.getElementById('import-file').click()">檢視歷史備份</button>
+            <button id="back-to-live-btn" class="btn-secondary hidden" onclick="window.exitArchiveMode()">回到即時班表</button>
+            <button id="edit-btn" onclick="togglePage('edit-page')">進入編輯</button>
+        </div>
     </div>
     
     <table id="calendar-table">
@@ -51,37 +70,19 @@
         <button class="btn-secondary" onclick="togglePage('view-page')">返回檢視</button>
     </div>
     
-    <div class="form-group">
-        <label>選擇排班月份：</label>
-        <input type="month" id="setting-month">
-    </div>
-    
-    <div class="form-group">
-        <label>回收設定：</label>
-        立體回收-1：
-        <select id="setting-3d-1">
-            <option value="1">星期一</option><option value="2">星期二</option><option value="3">星期三</option><option value="4">星期四</option><option value="5">星期五</option><option value="6">星期六</option><option value="0">星期日</option>
-        </select>
-        &nbsp;&nbsp;
-        立體回收-2：
-        <select id="setting-3d-2">
-            <option value="1">星期一</option><option value="2">星期二</option><option value="3">星期三</option><option value="4">星期四</option><option value="5">星期五</option><option value="6">星期六</option><option value="0">星期日</option>
-        </select>
-        <br><br>
-        平面回收：
-        <select id="setting-flat">
-            <option value="1">星期一</option><option value="2">星期二</option><option value="3">星期三</option><option value="4">星期四</option><option value="5">星期五</option><option value="6">星期六</option><option value="0">星期日</option>
-        </select>
+    <div class="form-group" style="background-color: #e9ecef; padding: 15px; border-radius: 8px; display: flex; align-items: center; gap: 15px;">
+        <label style="margin: 0;">目前編輯月份：</label>
+        <input type="month" id="edit-month" onchange="window.changeEditMonth(this.value)" style="font-weight: bold;">
+        <span style="font-size: 14px; color: #555;">(切換月份會自動載入該月設定)</span>
     </div>
 
     <div class="form-group">
-        <label>排班人員設定：</label>
+        <label>排班人員與當週回收設定：</label>
         <div id="shifts-container"></div>
-        <button class="btn-secondary" onclick="addShiftRow('', '', '')" style="margin-top: 10px;">+ 新增排班區間</button>
+        <button class="btn-secondary" onclick="addShiftRow()" style="margin-top: 5px;">+ 新增排班區間</button>
     </div>
 
     <hr>
-
     <button onclick="saveSettings()" style="width: 100%; font-size: 18px; margin-top: 10px;">儲存設定</button>
 </div>
 
@@ -98,41 +99,42 @@
     storageBucket: "trash-schedule-e713d.firebasestorage.app",
     messagingSenderId: "1012853858651",
     appId: "1:1012853858651:web:bb5a58cc3420f5f7ccfa7e"
-  };
-    
-    // 初始化 Firebase
+    };
+
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // 預設資料結構（移除鎖定屬性）
-    let globalData = { 
-        month: new Date().toISOString().slice(0, 7), 
-        recycle3D_1: '2', 
-        recycle3D_2: '6', 
-        recycleFlat: '4', 
-        shifts: []
-    };
-    let globalCheckboxes = {};
+    // 狀態管理
+    let allData = {}; // 存放所有月份的資料
+    let currentViewMonth = new Date().toISOString().slice(0, 7);
+    let currentEditMonth = currentViewMonth;
+    let isArchiveMode = false;
+    let archiveData = {};
 
-    // 監聽 Firebase 資料變化
+    // 頁面初始化
+    document.getElementById('view-month').value = currentViewMonth;
+    document.getElementById('edit-month').value = currentEditMonth;
+
+    // 監聽 Firebase 資料變化 (監聽整包資料，切換月份瞬間完成)
     onValue(ref(db, 'calendarData'), (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-            if (data.settings) {
-                globalData = data.settings;
-                // 處理舊版資料的相容性
-                if (globalData.recycle3D !== undefined) {
-                    globalData.recycle3D_1 = globalData.recycle3D;
-                    globalData.recycle3D_2 = '6';
-                    delete globalData.recycle3D;
-                }
-            }
-            if (data.checkboxes) {
-                globalCheckboxes = data.checkboxes;
-            }
+        const data = snapshot.val() || {};
+
+        // 舊版資料相容性處理 (將舊的設定自動搬移到新的月份結構中，在記憶體中轉換)
+        if (data.settings && !data.months) {
+            const m = data.settings.month || currentViewMonth;
+            if (!data.months) data.months = {};
+            data.months[m] = {
+                settings: data.settings,
+                checkboxes: data.checkboxes || {}
+            };
         }
-        renderCalendar();
-        fillEditForm();
+
+        allData = data.months || {};
+
+        if (!isArchiveMode) {
+            renderCalendar();
+            fillEditForm();
+        }
     });
 
     // 頁面切換
@@ -140,43 +142,101 @@
         document.getElementById('view-page').classList.add('hidden');
         document.getElementById('edit-page').classList.add('hidden');
         document.getElementById(pageId).classList.remove('hidden');
+        
+        // 進入編輯模式時，將編輯月份與觀看月份同步
+        if (pageId === 'edit-page') {
+            currentEditMonth = currentViewMonth;
+            document.getElementById('edit-month').value = currentEditMonth;
+            fillEditForm();
+        }
     };
 
-    // 新增排班人員欄位
-    window.addShiftRow = function(start, end, name) {
+    // 主畫面切換月份
+    window.changeViewMonth = function(monthStr) {
+        if (!monthStr) return;
+        currentViewMonth = monthStr;
+        renderCalendar();
+    };
+
+    // 編輯畫面切換月份 (自動載入該月資料)
+    window.changeEditMonth = function(monthStr) {
+        if (!monthStr) return;
+        currentEditMonth = monthStr;
+        fillEditForm();
+    };
+
+    // 產生星期下拉選單的輔助函數
+    function makeOptions(selectedVal) {
+        const days = ['日','一','二','三','四','五','六'];
+        return [1,2,3,4,5,6,0].map(d => `<option value="${d}" ${selectedVal == d ? 'selected' : ''}>星期${days[d]}</option>`).join('');
+    }
+
+    // 新增排班人員與回收欄位 (新版介面)
+    window.addShiftRow = function(shift = {}) {
+        const start = shift.start || '';
+        const end = shift.end || '';
+        const name = shift.name || '';
+        const r3d1 = shift.r3d1 || '2'; // 預設星期二
+        const r3d2 = shift.r3d2 || '6'; // 預設星期六
+        const rflat = shift.rflat || '5'; // 預設星期五
+
         const container = document.getElementById('shifts-container');
         const row = document.createElement('div');
         row.className = 'shift-row';
         row.innerHTML = `
-            開始：<input type="date" class="shift-start" value="${start}">
-            結束：<input type="date" class="shift-end" value="${end}">
-            人員：<input type="text" class="shift-name" value="${name}" placeholder="輸入名字">
-            <button class="btn-secondary" onclick="this.parentElement.remove()">刪除</button>
+            <div class="shift-top">
+                <strong>區間：</strong><input type="date" class="shift-start" value="${start}"> ~ <input type="date" class="shift-end" value="${end}">
+                <strong style="margin-left: 10px;">負責人：</strong><input type="text" class="shift-name" value="${name}" placeholder="輸入名字">
+                <button class="btn-danger" style="margin-left: auto;" onclick="this.parentElement.parentElement.remove()">刪除此區間</button>
+            </div>
+            <div class="shift-bottom">
+                <strong style="color: #0c5460;">本週回收日：</strong>
+                <label>立體-1: <select class="shift-r3d1">${makeOptions(r3d1)}</select></label>
+                <label>立體-2: <select class="shift-r3d2">${makeOptions(r3d2)}</select></label>
+                <label>平面: <select class="shift-rflat">${makeOptions(rflat)}</select></label>
+            </div>
         `;
         container.appendChild(row);
     };
 
-    // 儲存設定至 Firebase (移除密碼驗證)
+    // 將資料填入編輯表單 (動態讀取 currentEditMonth)
+    function fillEditForm() {
+        const container = document.getElementById('shifts-container');
+        container.innerHTML = '';
+        
+        const monthData = allData[currentEditMonth] || {};
+        const shifts = monthData.settings?.shifts || [];
+
+        if (shifts.length > 0) {
+            shifts.forEach(shift => window.addShiftRow(shift));
+        } else {
+            window.addShiftRow(); // 給一個空白列
+        }
+    }
+
+    // 儲存設定至 Firebase (獨立儲存到該月份節點)
     window.saveSettings = function() {
-        const newSettings = {
-            month: document.getElementById('setting-month').value || new Date().toISOString().slice(0, 7),
-            recycle3D_1: document.getElementById('setting-3d-1').value,
-            recycle3D_2: document.getElementById('setting-3d-2').value,
-            recycleFlat: document.getElementById('setting-flat').value,
-            shifts: []
-        };
+        const shifts = [];
         
         document.querySelectorAll('.shift-row').forEach(row => {
             const start = row.querySelector('.shift-start').value;
             const end = row.querySelector('.shift-end').value;
             const name = row.querySelector('.shift-name').value;
-            if (start && end && name) newSettings.shifts.push({ start, end, name });
+            const r3d1 = row.querySelector('.shift-r3d1').value;
+            const r3d2 = row.querySelector('.shift-r3d2').value;
+            const rflat = row.querySelector('.shift-rflat').value;
+
+            if (start && end && name) {
+                shifts.push({ start, end, name, r3d1, r3d2, rflat });
+            }
         });
 
-        // 寫入 Firebase
-        set(ref(db, 'calendarData/settings'), newSettings)
+        // 寫入到特定月份的節點
+        set(ref(db, `calendarData/months/${currentEditMonth}/settings/shifts`), shifts)
             .then(() => {
-                alert('設定已儲存！所有人的畫面將自動更新。');
+                alert(`${currentEditMonth} 排班設定已儲存！`);
+                currentViewMonth = currentEditMonth; // 切換觀看畫面到剛剛儲存的月份
+                document.getElementById('view-month').value = currentViewMonth;
                 togglePage('view-page');
             })
             .catch((error) => {
@@ -184,42 +244,33 @@
             });
     };
 
-    // 處理打勾事件並同步至 Firebase (移除密碼驗證)
+    // 處理打勾事件
     window.handleCheckboxChange = function(id, checkboxElem) {
         const isChecked = checkboxElem.checked;
-        
-        // 更新 Firebase 中的單一 Checkbox 狀態
+        if (isArchiveMode) {
+            alert('目前為歷史唯讀模式，無法修改！');
+            checkboxElem.checked = !isChecked; return;
+        }
+
         const updates = {};
-        updates['/calendarData/checkboxes/' + id] = isChecked;
+        updates[`/calendarData/months/${currentViewMonth}/checkboxes/${id}`] = isChecked;
         update(ref(db), updates).catch(err => {
-            alert('更新失敗，請檢查網路連線。');
-            checkboxElem.checked = !isChecked; // 若失敗則還原畫面打勾狀態
+            alert('更新失敗，請檢查網路。');
+            checkboxElem.checked = !isChecked;
         });
     };
 
-    // 將資料填入編輯表單
-    function fillEditForm() {
-        if (!globalData.month) return;
-        document.getElementById('setting-month').value = globalData.month;
-        document.getElementById('setting-3d-1').value = globalData.recycle3D_1 || '2';
-        document.getElementById('setting-3d-2').value = globalData.recycle3D_2 || '6';
-        document.getElementById('setting-flat').value = globalData.recycleFlat || '5';
-        
-        const container = document.getElementById('shifts-container');
-        container.innerHTML = '';
-        if (globalData.shifts && globalData.shifts.length > 0) {
-            globalData.shifts.forEach(shift => window.addShiftRow(shift.start, shift.end, shift.name));
-        } else {
-            window.addShiftRow('', '', '');
-        }
-    }
-
     // 生成並渲染月曆
     function renderCalendar() {
-        if (!globalData.month) return;
+        const renderMonth = isArchiveMode ? archiveData.month : currentViewMonth;
+        if (!renderMonth) return;
 
-        const [year, month] = globalData.month.split('-');
-        document.getElementById('calendar-title').innerText = `${year}年 ${month}月 排班表`;
+        const [year, month] = renderMonth.split('-');
+        
+        // 抓取該月的資料
+        const monthData = isArchiveMode ? archiveData : (allData[renderMonth] || {});
+        const shifts = isArchiveMode ? archiveData.shifts : (monthData.settings?.shifts || []);
+        const checkboxes = isArchiveMode ? archiveData.checkboxes : (monthData.checkboxes || {});
         
         const body = document.getElementById('calendar-body');
         body.innerHTML = '';
@@ -253,42 +304,28 @@
                     
                     let cellHTML = `<div class="date-number">${date}</div>`;
                     
-                    if (globalData.shifts) {
-                        const assignee = globalData.shifts.find(s => currentDateStr >= s.start && currentDateStr <= s.end);
-                        if (assignee) cellHTML += `<div class="assignee">${assignee.name}</div>`;
-                    }
+                    // 檢查這一天屬於哪一個排班區間
+                    const assignee = shifts.find(s => currentDateStr >= s.start && currentDateStr <= s.end);
                     
-                    // 檢查立體回收 1
-                    if (currentDayOfWeek == globalData.recycle3D_1) {
-                        const taskId = `task-3d-1-${currentDateStr}`;
-                        const isChecked = globalCheckboxes[taskId] ? 'checked' : '';
-                        cellHTML += `
-                            <div class="task">
-                                <input type="checkbox" id="${taskId}" ${isChecked} onchange="window.handleCheckboxChange('${taskId}', this)">
-                                <label for="${taskId}">立體回收</label>
-                            </div>`;
-                    }
-
-                    // 檢查立體回收 2
-                    if (currentDayOfWeek == globalData.recycle3D_2) {
-                        const taskId = `task-3d-2-${currentDateStr}`;
-                        const isChecked = globalCheckboxes[taskId] ? 'checked' : '';
-                        cellHTML += `
-                            <div class="task">
-                                <input type="checkbox" id="${taskId}" ${isChecked} onchange="window.handleCheckboxChange('${taskId}', this)">
-                                <label for="${taskId}">立體回收</label>
-                            </div>`;
-                    }
-
-                    // 檢查平面回收
-                    if (currentDayOfWeek == globalData.recycleFlat) {
-                        const taskId = `task-flat-${currentDateStr}`;
-                        const isChecked = globalCheckboxes[taskId] ? 'checked' : '';
-                        cellHTML += `
-                            <div class="task">
-                                <input type="checkbox" id="${taskId}" ${isChecked} onchange="window.handleCheckboxChange('${taskId}', this)">
-                                <label for="${taskId}">平面回收</label>
-                            </div>`;
+                    if (assignee) {
+                        cellHTML += `<div class="assignee">${assignee.name}</div>`;
+                        
+                        // 根據「該排班區間」的回收設定來產生 Checkbox
+                        if (currentDayOfWeek == assignee.r3d1) {
+                            const taskId = `task-3d-1-${currentDateStr}`;
+                            const isChecked = checkboxes[taskId] ? 'checked' : '';
+                            cellHTML += `<div class="task"><input type="checkbox" id="${taskId}" ${isChecked} onchange="window.handleCheckboxChange('${taskId}', this)"><label for="${taskId}">立體回收</label></div>`;
+                        }
+                        if (currentDayOfWeek == assignee.r3d2) {
+                            const taskId = `task-3d-2-${currentDateStr}`;
+                            const isChecked = checkboxes[taskId] ? 'checked' : '';
+                            cellHTML += `<div class="task"><input type="checkbox" id="${taskId}" ${isChecked} onchange="window.handleCheckboxChange('${taskId}', this)"><label for="${taskId}">立體回收</label></div>`;
+                        }
+                        if (currentDayOfWeek == assignee.rflat) {
+                            const taskId = `task-flat-${currentDateStr}`;
+                            const isChecked = checkboxes[taskId] ? 'checked' : '';
+                            cellHTML += `<div class="task"><input type="checkbox" id="${taskId}" ${isChecked} onchange="window.handleCheckboxChange('${taskId}', this)"><label for="${taskId}">平面回收</label></div>`;
+                        }
                     }
                     td.innerHTML = cellHTML;
                     date++;
@@ -301,6 +338,43 @@
             }
         }
     }
+
+    // 歷史模式相關邏輯保持不變
+    window.viewArchiveFile = function(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const archive = JSON.parse(e.target.result);
+                if (!archive.month) return alert('無效的備份檔案格式！');
+                isArchiveMode = true;
+                archiveData = { month: archive.month, shifts: archive.settings?.shifts || [], checkboxes: archive.checkboxes || {} };
+                
+                document.getElementById('archive-status').classList.remove('hidden');
+                document.getElementById('back-to-live-btn').classList.remove('hidden');
+                document.getElementById('edit-btn').classList.add('hidden');
+                
+                // 強制將畫面的月份切換到歷史備份的月份
+                document.getElementById('view-month').value = archive.month;
+                renderCalendar();
+                alert(`已成功載入 ${archive.month} 的歷史備份！`);
+            } catch (err) { alert('讀取檔案失敗：' + err.message); }
+        };
+        reader.readAsText(file);
+    };
+
+    window.exitArchiveMode = function() {
+        isArchiveMode = false;
+        document.getElementById('archive-status').classList.add('hidden');
+        document.getElementById('back-to-live-btn').classList.add('hidden');
+        document.getElementById('edit-btn').classList.remove('hidden');
+        document.getElementById('import-file').value = '';
+        
+        // 還原回離開前的月份
+        document.getElementById('view-month').value = currentViewMonth;
+        renderCalendar();
+    };
 </script>
 </body>
 </html>
