@@ -87,11 +87,11 @@
             white-space: pre-line; line-height: 1.5; text-align: left;
         }
         .modal-btn {
-            background-color: #0b57d0; color: white; padding: 10px 30px;
+            background-color: #5A5C69; color: white; padding: 10px 30px;
             border: none; border-radius: 20px; cursor: pointer; font-size: 15px;
             font-weight: bold; width: auto; display: inline-block;
         }
-        .modal-btn:hover { background-color: #0842a0; }
+        .modal-btn:hover { background-color: #43444E; }
     </style>
 </head>
 <body>
@@ -271,7 +271,7 @@
 
         set(ref(db, `calendarData/months/${currentEditMonth}/settings/shifts`), shifts)
             .then(() => {
-                alert(`${currentEditMonth} 排班設定已儲存😃👍👍`);
+                alert(`${currentEditMonth} 排班設定已儲存`);
                 currentViewMonth = currentEditMonth; 
                 document.getElementById('view-month').value = currentViewMonth;
                 if(isArchiveMode) window.exitArchiveMode(false);
