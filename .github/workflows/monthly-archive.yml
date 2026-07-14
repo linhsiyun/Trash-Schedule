@@ -36,5 +36,5 @@ jobs:
       - name: 5. 將產生的備份檔案上傳回 GitHub
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "🤖 自動備份上個月的排班與打勾紀錄"
+          commit_message: "備份上個月的排班與完成紀錄"
           file_pattern: "archives/*.json"
