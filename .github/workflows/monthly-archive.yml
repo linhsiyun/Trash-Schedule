@@ -1,0 +1,40 @@
+name: 每月自動備份排班表
+
+on:
+  schedule:
+    # 設定為每個月 1 號的 00:00 (UTC) 執行
+    - cron: '0 0 1 * *'
+  # 這個設定允許我們手動點擊按鈕來測試
+  workflow_dispatch: 
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    
+    # 賦予機器人寫入儲存庫的權限
+    permissions:
+      contents: write
+
+    steps:
+      - name: 1. 下載儲存庫程式碼
+        uses: actions/checkout@v4
+
+      - name: 2. 設定 Node.js 環境
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 3. 安裝 Firebase 後台套件
+        run: npm install firebase-admin
+
+      - name: 4. 執行備份程式
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FIREBASE_DATABASE_URL: ${{ secrets.FIREBASE_DATABASE_URL }}
+        run: node archive.js
+
+      - name: 5. 將產生的備份檔案上傳回 GitHub
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "🤖 自動備份上個月的排班與打勾紀錄"
+          file_pattern: "archives/*.json"
