@@ -1,0 +1,20 @@
+{
+  "month": "2026-06",
+  "settings": {
+    "shifts": [
+      {
+        "end": "2026-06-14",
+        "name": "想吃宵夜",
+        "r3d1": "2",
+        "r3d2": "6",
+        "rflat": "5",
+        "start": "2026-06-08"
+      }
+    ]
+  },
+  "checkboxes": {
+    "task-3d-1-2026-06-09": true,
+    "task-3d-2-2026-06-13": true,
+    "task-flat-2026-06-12": true
+  }
+}
