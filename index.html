@@ -71,6 +71,27 @@
             .shift-bottom select { width: 65%; }
             .btn-danger { margin-left: 0 !important; width: 100%; margin-top: 10px; }
         }
+        /* ========= 自訂提示視窗樣式 ========= */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4); display: flex;
+            justify-content: center; align-items: center; z-index: 9999;
+        }
+        .modal-box {
+            background: white; padding: 25px; border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15); text-align: center;
+            max-width: 80%; min-width: 280px;
+        }
+        .modal-message { 
+            margin-bottom: 25px; font-size: 16px; color: #333; 
+            white-space: pre-line; line-height: 1.5; text-align: left;
+        }
+        .modal-btn {
+            background-color: #0b57d0; color: white; padding: 10px 30px;
+            border: none; border-radius: 20px; cursor: pointer; font-size: 15px;
+            font-weight: bold; width: auto; display: inline-block;
+        }
+        .modal-btn:hover { background-color: #0842a0; }
     </style>
 </head>
 <body>
@@ -133,6 +154,12 @@
     storageBucket: "trash-schedule-e713d.firebasestorage.app",
     messagingSenderId: "1012853858651",
     appId: "1:1012853858651:web:bb5a58cc3420f5f7ccfa7e"
+    };
+
+    // 攔截並覆寫瀏覽器預設的 alert 功能
+    window.alert = function(message) {
+        document.getElementById('custom-alert-message').innerText = message;
+        document.getElementById('custom-alert').classList.remove('hidden');
     };
 
     const app = initializeApp(firebaseConfig);
@@ -367,4 +394,11 @@
     };
 </script>
 </body>
+<!-- 自訂的提示視窗 -->
+<div id="custom-alert" class="modal-overlay hidden">
+    <div class="modal-box">
+        <div id="custom-alert-message" class="modal-message"></div>
+        <button class="modal-btn" onclick="document.getElementById('custom-alert').classList.add('hidden')">確定</button>
+    </div>
+</div>
 </html>
