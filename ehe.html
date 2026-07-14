@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>值日排班與回收月曆</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; background-color: #f5f5f5; }
+        .container { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
+        button { padding: 8px 16px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #0056b3; }
+        .btn-secondary { background-color: #6c757d; }
+        .btn-secondary:hover { background-color: #5a6268; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; vertical-align: top; }
+        th { background-color: #343a40; color: white; text-align: center; }
+        td { height: 100px; }
+        .week-odd { background-color: #ffffff; }
+        .week-even { background-color: #fdf3e7; }
+        .date-number { font-weight: bold; font-size: 18px; margin-bottom: 5px; color: #555; }
+        .assignee { background-color: #d1ecf1; color: #0c5460; padding: 4px; border-radius: 4px; margin-bottom: 5px; font-size: 14px; font-weight: bold; }
+        .task { font-size: 14px; margin-top: 5px; display: flex; align-items: center; background-color: #e2e3e5; padding: 4px; border-radius: 4px; }
+        .task input { margin-right: 5px; cursor: pointer; }
+        .hidden { display: none !important; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        select, input[type="month"], input[type="date"], input[type="text"] { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
+        .shift-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="view-page">
+    <div class="header">
+        <h1 id="calendar-title">載入中...</h1>
+        <button onclick="togglePage('edit-page')">進入編輯</button>
+    </div>
+    
+    <table id="calendar-table">
+        <thead>
+            <tr><th>星期一</th><th>星期二</th><th>星期三</th><th>星期四</th><th>星期五</th><th>星期六</th><th>星期日</th></tr>
+        </thead>
+        <tbody id="calendar-body"></tbody>
+    </table>
+</div>
+
+<div class="container hidden" id="edit-page">
+    <div class="header">
+        <h1>編輯排班設定</h1>
+        <button class="btn-secondary" onclick="togglePage('view-page')">返回檢視</button>
+    </div>
+    
+    <div class="form-group">
+        <label>選擇排班月份：</label>
+        <input type="month" id="setting-month">
+    </div>
+    
+    <div class="form-group">
+        <label>回收設定：</label>
+        立體回收-1：
+        <select id="setting-3d-1">
+            <option value="1">星期一</option><option value="2">星期二</option><option value="3">星期三</option><option value="4">星期四</option><option value="5">星期五</option><option value="6">星期六</option><option value="0">星期日</option>
+        </select>
+        &nbsp;&nbsp;
+        立體回收-2：
+        <select id="setting-3d-2">
+            <option value="1">星期一</option><option value="2">星期二</option><option value="3">星期三</option><option value="4">星期四</option><option value="5">星期五</option><option value="6">星期六</option><option value="0">星期日</option>
+        </select>
+        <br><br>
+        平面回收：
+        <select id="setting-flat">
+            <option value="1">星期一</option><option value="2">星期二</option><option value="3">星期三</option><option value="4">星期四</option><option value="5">星期五</option><option value="6">星期六</option><option value="0">星期日</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>排班人員設定：</label>
+        <div id="shifts-container"></div>
+        <button class="btn-secondary" onclick="addShiftRow('', '', '')" style="margin-top: 10px;">+ 新增排班區間</button>
+    </div>
+
+    <hr>
+
+    <button onclick="saveSettings()" style="width: 100%; font-size: 18px; margin-top: 10px;">儲存設定</button>
+</div>
+
+<!-- 引入 Firebase SDK -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+    const firebaseConfig = {
+    apiKey: "AIzaSyCWE7UedT0w9onvfi6TJP7_PCC_2UZ_uGo",
+    authDomain: "trash-schedule-e713d.firebaseapp.com",
+    databaseURL: "https://trash-schedule-e713d-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "trash-schedule-e713d",
+    storageBucket: "trash-schedule-e713d.firebasestorage.app",
+    messagingSenderId: "1012853858651",
+    appId: "1:1012853858651:web:bb5a58cc3420f5f7ccfa7e"
+  };
+    
+    // 初始化 Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // 預設資料結構（移除鎖定屬性）
+    let globalData = { 
+        month: new Date().toISOString().slice(0, 7), 
+        recycle3D_1: '2', 
+        recycle3D_2: '6', 
+        recycleFlat: '4', 
+        shifts: []
+    };
+    let globalCheckboxes = {};
+
+    // 監聽 Firebase 資料變化
+    onValue(ref(db, 'calendarData'), (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            if (data.settings) {
+                globalData = data.settings;
+                // 處理舊版資料的相容性
+                if (globalData.recycle3D !== undefined) {
+                    globalData.recycle3D_1 = globalData.recycle3D;
+                    globalData.recycle3D_2 = '6';
+                    delete globalData.recycle3D;
+                }
+            }
+            if (data.checkboxes) {
+                globalCheckboxes = data.checkboxes;
+            }
+        }
+        renderCalendar();
+        fillEditForm();
+    });
+
+    // 頁面切換
+    window.togglePage = function(pageId) {
+        document.getElementById('view-page').classList.add('hidden');
+        document.getElementById('edit-page').classList.add('hidden');
+        document.getElementById(pageId).classList.remove('hidden');
+    };
+
+    // 新增排班人員欄位
+    window.addShiftRow = function(start, end, name) {
+        const container = document.getElementById('shifts-container');
+        const row = document.createElement('div');
+        row.className = 'shift-row';
+        row.innerHTML = `
+            開始：<input type="date" class="shift-start" value="${start}">
+            結束：<input type="date" class="shift-end" value="${end}">
+            人員：<input type="text" class="shift-name" value="${name}" placeholder="輸入名字">
+            <button class="btn-secondary" onclick="this.parentElement.remove()">刪除</button>
+        `;
+        container.appendChild(row);
+    };
+
+    // 儲存設定至 Firebase (移除密碼驗證)
+    window.saveSettings = function() {
+        const newSettings = {
+            month: document.getElementById('setting-month').value || new Date().toISOString().slice(0, 7),
+            recycle3D_1: document.getElementById('setting-3d-1').value,
+            recycle3D_2: document.getElementById('setting-3d-2').value,
+            recycleFlat: document.getElementById('setting-flat').value,
+            shifts: []
+        };
+        
+        document.querySelectorAll('.shift-row').forEach(row => {
+            const start = row.querySelector('.shift-start').value;
+            const end = row.querySelector('.shift-end').value;
+            const name = row.querySelector('.shift-name').value;
+            if (start && end && name) newSettings.shifts.push({ start, end, name });
+        });
+
+        // 寫入 Firebase
+        set(ref(db, 'calendarData/settings'), newSettings)
+            .then(() => {
+                alert('設定已儲存！所有人的畫面將自動更新。');
+                togglePage('view-page');
+            })
+            .catch((error) => {
+                alert('儲存失敗：' + error.message);
+            });
+    };
+
+    // 處理打勾事件並同步至 Firebase (移除密碼驗證)
+    window.handleCheckboxChange = function(id, checkboxElem) {
+        const isChecked = checkboxElem.checked;
+        
+        // 更新 Firebase 中的單一 Checkbox 狀態
+        const updates = {};
+        updates['/calendarData/checkboxes/' + id] = isChecked;
+        update(ref(db), updates).catch(err => {
+            alert('更新失敗，請檢查網路連線。');
+            checkboxElem.checked = !isChecked; // 若失敗則還原畫面打勾狀態
+        });
+    };
+
+    // 將資料填入編輯表單
+    function fillEditForm() {
+        if (!globalData.month) return;
+        document.getElementById('setting-month').value = globalData.month;
+        document.getElementById('setting-3d-1').value = globalData.recycle3D_1 || '2';
+        document.getElementById('setting-3d-2').value = globalData.recycle3D_2 || '6';
+        document.getElementById('setting-flat').value = globalData.recycleFlat || '5';
+        
+        const container = document.getElementById('shifts-container');
+        container.innerHTML = '';
+        if (globalData.shifts && globalData.shifts.length > 0) {
+            globalData.shifts.forEach(shift => window.addShiftRow(shift.start, shift.end, shift.name));
+        } else {
+            window.addShiftRow('', '', '');
+        }
+    }
+
+    // 生成並渲染月曆
+    function renderCalendar() {
+        if (!globalData.month) return;
+
+        const [year, month] = globalData.month.split('-');
+        document.getElementById('calendar-title').innerText = `${year}年 ${month}月 排班表`;
+        
+        const body = document.getElementById('calendar-body');
+        body.innerHTML = '';
+        
+        const firstDay = new Date(year, month - 1, 1);
+        const lastDay = new Date(year, month, 0);
+        const daysInMonth = lastDay.getDate();
+        
+        let startDayOfWeek = firstDay.getDay() - 1;
+        if (startDayOfWeek === -1) startDayOfWeek = 6;
+        
+        let date = 1;
+        let weekCount = 0;
+        
+        for (let i = 0; i < 6; i++) {
+            const tr = document.createElement('tr');
+            tr.className = weekCount % 2 === 0 ? 'week-odd' : 'week-even';
+            let hasDays = false;
+            
+            for (let j = 0; j < 7; j++) {
+                const td = document.createElement('td');
+                
+                if (i === 0 && j < startDayOfWeek) {
+                    td.innerHTML = '';
+                } else if (date > daysInMonth) {
+                    td.innerHTML = '';
+                } else {
+                    hasDays = true;
+                    const currentDateStr = `${year}-${month}-${String(date).padStart(2, '0')}`;
+                    const currentDayOfWeek = new Date(year, month - 1, date).getDay();
+                    
+                    let cellHTML = `<div class="date-number">${date}</div>`;
+                    
+                    if (globalData.shifts) {
+                        const assignee = globalData.shifts.find(s => currentDateStr >= s.start && currentDateStr <= s.end);
+                        if (assignee) cellHTML += `<div class="assignee">${assignee.name}</div>`;
+                    }
+                    
+                    // 檢查立體回收 1
+                    if (currentDayOfWeek == globalData.recycle3D_1) {
+                        const taskId = `task-3d-1-${currentDateStr}`;
+                        const isChecked = globalCheckboxes[taskId] ? 'checked' : '';
+                        cellHTML += `
+                            <div class="task">
+                                <input type="checkbox" id="${taskId}" ${isChecked} onchange="window.handleCheckboxChange('${taskId}', this)">
+                                <label for="${taskId}">立體回收</label>
+                            </div>`;
+                    }
+
+                    // 檢查立體回收 2
+                    if (currentDayOfWeek == globalData.recycle3D_2) {
+                        const taskId = `task-3d-2-${currentDateStr}`;
+                        const isChecked = globalCheckboxes[taskId] ? 'checked' : '';
+                        cellHTML += `
+                            <div class="task">
+                                <input type="checkbox" id="${taskId}" ${isChecked} onchange="window.handleCheckboxChange('${taskId}', this)">
+                                <label for="${taskId}">立體回收</label>
+                            </div>`;
+                    }
+
+                    // 檢查平面回收
+                    if (currentDayOfWeek == globalData.recycleFlat) {
+                        const taskId = `task-flat-${currentDateStr}`;
+                        const isChecked = globalCheckboxes[taskId] ? 'checked' : '';
+                        cellHTML += `
+                            <div class="task">
+                                <input type="checkbox" id="${taskId}" ${isChecked} onchange="window.handleCheckboxChange('${taskId}', this)">
+                                <label for="${taskId}">平面回收</label>
+                            </div>`;
+                    }
+                    td.innerHTML = cellHTML;
+                    date++;
+                }
+                tr.appendChild(td);
+            }
+            if (hasDays) {
+                body.appendChild(tr);
+                weekCount++;
+            }
+        }
+    }
+</script>
+</body>
+</html>
