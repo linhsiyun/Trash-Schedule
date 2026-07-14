@@ -79,7 +79,7 @@
     <div class="header">
         <div class="header-title">
             <input type="month" id="view-month" onchange="window.changeViewMonth(this.value)">
-            <h1 style="margin:0; font-size: 18px;">排班表:3 <span id="archive-status" class="status-badge badge-archive hidden">歷史唯讀</span></h1>
+            <h1 style="margin:0; font-size: 18px;">排班表 :3 <span id="archive-status" class="status-badge badge-archive hidden">歷史唯讀</span></h1>
         </div>
         <div class="header-buttons">
             <button id="fetch-archive-btn" class="btn-success" onclick="window.fetchArchiveFromGitHub()">載入歷史備份</button>
@@ -91,7 +91,7 @@
     <div class="table-responsive">
         <table id="calendar-table">
             <thead>
-                <tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr>
+                <tr><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th><th>日</th></tr>
             </thead>
             <tbody id="calendar-body"></tbody>
         </table>
@@ -283,7 +283,8 @@
         const daysInMonth = lastDay.getDate();
         
         // 將星期日轉換為第一天，配合簡化版的表頭 (日, 一, 二, 三, 四, 五, 六)
-        let startDayOfWeek = firstDay.getDay(); 
+        let startDayOfWeek = firstDay.getDay() - 1;
+        if (startDayOfWeek === -1) startDayOfWeek = 6; 
         let date = 1; let weekCount = 0;
         
         for (let i = 0; i < 6; i++) {
