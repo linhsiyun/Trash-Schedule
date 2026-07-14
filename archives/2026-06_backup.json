@@ -2,18 +2,20 @@
   "checkboxes": {
     "task-3d-1-2026-07-07": false,
     "task-3d-2-2026-07-18": true,
-    "task-flat-2026-07-16": true
+    "task-3d-2-2026-11-21": true,
+    "task-flat-2026-07-16": true,
+    "task-flat-2026-11-19": true
   },
   "settings": {
-    "month": "2026-07",
+    "month": "2026-11",
     "recycle3D_1": "2",
     "recycle3D_2": "6",
     "recycleFlat": "4",
     "shifts": [
       {
-        "end": "2026-07-17",
+        "end": "2026-11-21",
         "name": "啊啊啊啊",
-        "start": "2026-07-13"
+        "start": "2026-11-16"
       }
     ]
   }
