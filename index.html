@@ -20,15 +20,16 @@
         .btn-success { background-color: #28a745; }
         .btn-success:hover { background-color: #218838; }
         
-        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; min-width: 800px; }
+        /* 移除橫向捲軸與最小寬度限制，讓表格自由伸縮 */
+        .table-responsive { width: 100%; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; vertical-align: top; }
         th { background-color: #343a40; color: white; text-align: center; }
         td { height: 100px; }
         .week-odd { background-color: #ffffff; }
         .week-even { background-color: #fdf3e7; }
         .date-number { font-weight: bold; font-size: 18px; margin-bottom: 5px; color: #555; }
-        .assignee { background-color: #d1ecf1; color: #0c5460; padding: 4px; border-radius: 4px; margin-bottom: 5px; font-size: 14px; font-weight: bold; }
+        .assignee { background-color: #d1ecf1; color: #0c5460; padding: 4px; border-radius: 4px; margin-bottom: 5px; font-size: 14px; font-weight: bold; text-align: center; }
         .task { font-size: 14px; margin-top: 5px; display: flex; align-items: center; background-color: #e2e3e5; padding: 6px; border-radius: 4px; }
         .task input { margin-right: 5px; cursor: pointer; transform: scale(1.2); }
         .hidden { display: none !important; }
@@ -42,13 +43,28 @@
         .shift-top { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 10px; }
         .shift-bottom { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; font-size: 15px; background-color: #fff; padding: 10px; border-radius: 4px; border: 1px dashed #ccc; }
 
+        /* ========= 手機版極致壓縮，無捲軸模式 ========= */
         @media (max-width: 768px) {
-            body { padding: 10px; }
+            body { padding: 5px; }
+            .container { padding: 10px; }
             .header { flex-direction: column; align-items: stretch; }
             .header-title { flex-direction: column; align-items: flex-start; }
             .header-title input[type="month"] { width: 100%; box-sizing: border-box; }
             .header-buttons { flex-wrap: wrap; justify-content: space-between; }
             .header-buttons button, .header-buttons label { flex: 1; min-width: 100px; text-align: center; box-sizing: border-box; }
+            
+            /* 表格文字與間距大縮水，強制塞入螢幕 */
+            th { padding: 4px 0; font-size: 12px; }
+            td { padding: 4px 2px; height: auto; min-height: 80px; }
+            .date-number { font-size: 14px; margin-bottom: 2px; text-align: center; }
+            .assignee { font-size: 11px; padding: 2px 0; margin-bottom: 2px; letter-spacing: -0.5px; }
+            
+            /* 打勾任務改為上下排列，節省橫向空間 */
+            .task { font-size: 10px; padding: 2px; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+            .task input { margin-right: 0; transform: scale(1.1); margin-bottom: 2px; }
+            .task label { display: block; text-align: center; letter-spacing: -0.5px; }
+
+            /* 編輯畫面 */
             .shift-top, .shift-bottom { flex-direction: column; align-items: stretch; gap: 8px; }
             .shift-top input { width: 100%; box-sizing: border-box; margin-bottom: 5px; }
             .shift-bottom label { width: 100%; display: flex; justify-content: space-between; align-items: center; }
@@ -63,20 +79,19 @@
     <div class="header">
         <div class="header-title">
             <input type="month" id="view-month" onchange="window.changeViewMonth(this.value)">
-            <h1 style="margin:0; font-size: 20px;">排班表 (ﾟ∀ﾟ) <span id="archive-status" class="status-badge badge-archive hidden">歷史備份唯讀中</span></h1>
+            <h1 style="margin:0; font-size: 18px;">排班表:3 <span id="archive-status" class="status-badge badge-archive hidden">歷史唯讀</span></h1>
         </div>
         <div class="header-buttons">
-            <!-- 替換為直接從雲端抓取 -->
-            <button id="fetch-archive-btn" class="btn-success" onclick="window.fetchArchiveFromGitHub()">歷史備份</button>
+            <button id="fetch-archive-btn" class="btn-success" onclick="window.fetchArchiveFromGitHub()">載入歷史備份</button>
             <button id="back-to-live-btn" class="btn-secondary hidden" onclick="window.exitArchiveMode()">回到即時資料</button>
-            <button id="edit-btn" onclick="togglePage('edit-page')">編輯</button>
+            <button id="edit-btn" onclick="togglePage('edit-page')">進入編輯</button>
         </div>
     </div>
     
     <div class="table-responsive">
         <table id="calendar-table">
             <thead>
-                <tr><th>星期一</th><th>星期二</th><th>星期三</th><th>星期四</th><th>星期五</th><th>星期六</th><th>星期日</th></tr>
+                <tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr>
             </thead>
             <tbody id="calendar-body"></tbody>
         </table>
@@ -85,14 +100,14 @@
 
 <div class="container hidden" id="edit-page">
     <div class="header">
-        <h1 style="font-size: 20px;">編輯排班設定</h1>
+        <h1 style="font-size: 18px;">編輯排班設定</h1>
         <button class="btn-secondary" onclick="togglePage('view-page')">返回檢視</button>
     </div>
     
     <div class="form-group" style="background-color: #e9ecef; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 5px;">
         <label style="margin: 0;">目前編輯月份：</label>
         <input type="month" id="edit-month" onchange="window.changeEditMonth(this.value)" style="font-weight: bold; width: 100%; box-sizing: border-box;">
-        <span style="font-size: 14px; color: #555;">(切換月份會自動載入那個月的設定)</span>
+        <span style="font-size: 12px; color: #555;">(切換月份會自動載入那個月的設定)</span>
     </div>
 
     <div class="form-group">
@@ -160,7 +175,6 @@
     window.changeViewMonth = function(monthStr) {
         if (!monthStr) return;
         currentViewMonth = monthStr;
-        // 如果原本在看備份，切換月份時自動回到即時模式
         if (isArchiveMode) window.exitArchiveMode(false);
         renderCalendar();
     };
@@ -194,7 +208,7 @@
                     <span>~</span> 
                     <input type="date" class="shift-end" value="${end}">
                 </div>
-                <input type="text" class="shift-name" value="${name}" placeholder="輸入排班人員名字">
+                <input type="text" class="shift-name" value="${name}" placeholder="輸入排班人名">
                 <button class="btn-danger" onclick="this.parentElement.parentElement.remove()">刪除此區間</button>
             </div>
             <div class="shift-bottom">
@@ -242,7 +256,7 @@
     window.handleCheckboxChange = function(id, checkboxElem) {
         const isChecked = checkboxElem.checked;
         if (isArchiveMode) {
-            alert('目前是歷史唯讀模式，無法修改(ゝ∀･)');
+            alert('目前為歷史唯讀模式，無法修改 (ゝ∀･)');
             checkboxElem.checked = !isChecked; return;
         }
         const updates = {};
@@ -267,8 +281,9 @@
         const firstDay = new Date(year, month - 1, 1);
         const lastDay = new Date(year, month, 0);
         const daysInMonth = lastDay.getDate();
-        let startDayOfWeek = firstDay.getDay() - 1;
-        if (startDayOfWeek === -1) startDayOfWeek = 6;
+        
+        // 將星期日轉換為第一天，配合簡化版的表頭 (日, 一, 二, 三, 四, 五, 六)
+        let startDayOfWeek = firstDay.getDay(); 
         let date = 1; let weekCount = 0;
         
         for (let i = 0; i < 6; i++) {
@@ -288,20 +303,22 @@
                     const assignee = shifts.find(s => currentDateStr >= s.start && currentDateStr <= s.end);
                     if (assignee) {
                         cellHTML += `<div class="assignee">${assignee.name}</div>`;
+                        
+                        // 為了節省手機版空間，把「立體回收」改成「立體」，「平面回收」改成「平面」
                         if (currentDayOfWeek == assignee.r3d1) {
                             const taskId = `task-3d-1-${currentDateStr}`;
                             const isChecked = checkboxes[taskId] ? 'checked' : '';
-                            cellHTML += `<div class="task"><input type="checkbox" id="${taskId}" ${isChecked} onchange="window.handleCheckboxChange('${taskId}', this)"><label for="${taskId}">立體回收</label></div>`;
+                            cellHTML += `<div class="task"><input type="checkbox" id="${taskId}" ${isChecked} onchange="window.handleCheckboxChange('${taskId}', this)"><label for="${taskId}">立體</label></div>`;
                         }
                         if (currentDayOfWeek == assignee.r3d2) {
                             const taskId = `task-3d-2-${currentDateStr}`;
                             const isChecked = checkboxes[taskId] ? 'checked' : '';
-                            cellHTML += `<div class="task"><input type="checkbox" id="${taskId}" ${isChecked} onchange="window.handleCheckboxChange('${taskId}', this)"><label for="${taskId}">立體回收</label></div>`;
+                            cellHTML += `<div class="task"><input type="checkbox" id="${taskId}" ${isChecked} onchange="window.handleCheckboxChange('${taskId}', this)"><label for="${taskId}">立體</label></div>`;
                         }
                         if (currentDayOfWeek == assignee.rflat) {
                             const taskId = `task-flat-${currentDateStr}`;
                             const isChecked = checkboxes[taskId] ? 'checked' : '';
-                            cellHTML += `<div class="task"><input type="checkbox" id="${taskId}" ${isChecked} onchange="window.handleCheckboxChange('${taskId}', this)"><label for="${taskId}">平面回收</label></div>`;
+                            cellHTML += `<div class="task"><input type="checkbox" id="${taskId}" ${isChecked} onchange="window.handleCheckboxChange('${taskId}', this)"><label for="${taskId}">平面</label></div>`;
                         }
                     }
                     td.innerHTML = cellHTML; date++;
@@ -312,30 +329,20 @@
         }
     }
 
-    // ========= 全新功能：直接從 GitHub 抓取 JSON =========
     window.fetchArchiveFromGitHub = async function() {
         const monthStr = document.getElementById('view-month').value;
-        if (!monthStr) return alert('請先選擇您要查看的月份！');
+        if (!monthStr) return alert('請先選擇您要查看的月份');
 
         try {
-            // 使用相對路徑抓取 GitHub Pages 上的 archives 資料夾內的 JSON
             const response = await fetch(`./archives/${monthStr}_backup.json`);
-            
             if (!response.ok) {
                 throw new Error(`找不到 ${monthStr} 的備份檔案！\n請確認該月份是否已經由 GitHub 機器人自動備份過。`);
             }
-
             const archive = await response.json();
             
-            // 啟動歷史模式
             isArchiveMode = true;
-            archiveData = { 
-                month: archive.month, 
-                shifts: archive.settings?.shifts || [], 
-                checkboxes: archive.checkboxes || {} 
-            };
+            archiveData = { month: archive.month, shifts: archive.settings?.shifts || [], checkboxes: archive.checkboxes || {} };
             
-            // UI 切換
             document.getElementById('archive-status').classList.remove('hidden');
             document.getElementById('back-to-live-btn').classList.remove('hidden');
             document.getElementById('edit-btn').classList.add('hidden');
@@ -343,7 +350,6 @@
             
             renderCalendar();
             alert(`已成功從雲端載入 ${archive.month} 的歷史備份！`);
-
         } catch (err) {
             alert(err.message);
         }
