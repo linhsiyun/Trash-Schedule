@@ -271,7 +271,7 @@
 
         set(ref(db, `calendarData/months/${currentEditMonth}/settings/shifts`), shifts)
             .then(() => {
-                alert(`${currentEditMonth} 排班設定已儲存！`);
+                alert(`${currentEditMonth} 排班設定已儲存😃👍👍`);
                 currentViewMonth = currentEditMonth; 
                 document.getElementById('view-month').value = currentViewMonth;
                 if(isArchiveMode) window.exitArchiveMode(false);
@@ -364,7 +364,7 @@
         try {
             const response = await fetch(`./archives/${monthStr}_backup.json`);
             if (!response.ok) {
-                throw new Error(`找不到 ${monthStr} 的備份檔案( ´･ω)\n請確認該月份是否已經由 GitHub 機器人自動備份過`);
+                throw new Error(`找不到 ${monthStr} 的備份檔案( ´･ω)`);
             }
             const archive = await response.json();
             
