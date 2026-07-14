@@ -100,7 +100,7 @@
     <div class="header">
         <div class="header-title">
             <input type="month" id="view-month" onchange="window.changeViewMonth(this.value)">
-            <h1 style="margin:0; font-size: 28px;">排班表 :3 <span id="archive-status" class="status-badge badge-archive hidden">歷史唯讀</span></h1>
+            <h1 style="margin:0; font-size: 28px;">值日表 (╯'-')╯︵♻<span id="archive-status" class="status-badge badge-archive hidden">歷史唯讀</span></h1>
         </div>
         <div class="header-buttons">
             <button id="fetch-archive-btn" class="btn-success" onclick="window.fetchArchiveFromGitHub()">載入歷史備份</button>
@@ -121,7 +121,7 @@
 
 <div class="container hidden" id="edit-page">
     <div class="header">
-        <h1 style="font-size: 18px;">編輯排班設定</h1>
+        <h1 style="font-size: 18px;">編輯值日設定</h1>
         <button class="btn-secondary" onclick="togglePage('view-page')">返回檢視</button>
     </div>
     
@@ -132,9 +132,9 @@
     </div>
 
     <div class="form-group">
-        <label>排班人員與當週回收設定：</label>
+        <label>值日生與當週回收設定：</label>
         <div id="shifts-container"></div>
-        <button class="btn-secondary" onclick="addShiftRow()" style="margin-top: 5px; width: 100%;">+ 新增排班區間</button>
+        <button class="btn-secondary" onclick="addShiftRow()" style="margin-top: 5px; width: 100%;">+ 新增值日區間</button>
     </div>
 
     <hr>
@@ -235,7 +235,7 @@
                     <span>~</span> 
                     <input type="date" class="shift-end" value="${end}">
                 </div>
-                <input type="text" class="shift-name" value="${name}" placeholder="輸入排班人名">
+                <input type="text" class="shift-name" value="${name}" placeholder="輸入值日生名字">
                 <button class="btn-danger" onclick="this.parentElement.parentElement.remove()">刪除此區間</button>
             </div>
             <div class="shift-bottom">
@@ -271,7 +271,7 @@
 
         set(ref(db, `calendarData/months/${currentEditMonth}/settings/shifts`), shifts)
             .then(() => {
-                alert(`${currentEditMonth} 排班設定已儲存`);
+                alert(`${currentEditMonth} 值日設定已儲存`);
                 currentViewMonth = currentEditMonth; 
                 document.getElementById('view-month').value = currentViewMonth;
                 if(isArchiveMode) window.exitArchiveMode(false);
