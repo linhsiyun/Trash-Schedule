@@ -336,7 +336,7 @@
         try {
             const response = await fetch(`./archives/${monthStr}_backup.json`);
             if (!response.ok) {
-                throw new Error(`找不到 ${monthStr} 的備份檔案！\n請確認該月份是否已經由 GitHub 機器人自動備份過。`);
+                throw new Error(`找不到 ${monthStr} 的備份檔案( ´･ω)\n請確認該月份是否已經由 GitHub 機器人自動備份過`);
             }
             const archive = await response.json();
             
