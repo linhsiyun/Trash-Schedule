@@ -22,7 +22,7 @@ jobs:
       - name: 2. 設定 Node.js 環境
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: 3. 安裝 Firebase 後台套件
         run: npm install firebase-admin
