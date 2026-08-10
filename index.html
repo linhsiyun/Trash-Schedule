@@ -20,7 +20,6 @@
         .btn-success { background-color: #7452A1; color: white; font-weight: bold; }
         .btn-success:hover { background-color: #563B7A; } 
         
-        /* 移除橫向捲軸與最小寬度限制，讓表格自由伸縮 */
         .table-responsive { width: 100%; }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; vertical-align: top; }
@@ -30,8 +29,10 @@
         .week-even { background-color: #fdf3e7; }
         .date-number { font-weight: bold; font-size: 18px; margin-bottom: 5px; color: #555; }
         .assignee { background-color: #d1ecf1; color: #0c5460; padding: 4px; border-radius: 4px; margin-bottom: 5px; font-size: 14px; font-weight: bold; text-align: center; }
-        .task { font-size: 14px; margin-top: 5px; display: flex; align-items: center; background-color: #e2e3e5; padding: 6px; border-radius: 4px; }
-        .task input { margin-right: 5px; cursor: pointer; transform: scale(1.2); accent-color: #0c5460;}
+        
+        /* 任務改為純文字標籤樣式 */
+        .task { font-size: 14px; margin-top: 5px; display: flex; align-items: center; justify-content: center; background-color: #e2e3e5; padding: 6px; border-radius: 4px; font-weight: bold; color: #333; }
+        
         .hidden { display: none !important; }
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
@@ -43,7 +44,6 @@
         .shift-top { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 10px; }
         .shift-bottom { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; font-size: 15px; background-color: #fff; padding: 10px; border-radius: 4px; border: 1px dashed #ccc; }
 
-        /* ========= 手機版極致壓縮，無捲軸模式 ========= */
         @media (max-width: 768px) {
             body { padding: 5px; }
             .container { padding: 10px; }
@@ -52,26 +52,19 @@
             .header-title input[type="month"] { width: 100%; box-sizing: border-box; }
             .header-buttons { flex-wrap: wrap; justify-content: space-between; }
             .header-buttons button, .header-buttons label { flex: 1; min-width: 100px; text-align: center; box-sizing: border-box; }
-            
-            /* 表格文字與間距大縮水，強制塞入螢幕 */
             th { padding: 4px 0; font-size: 12px; }
             td { padding: 4px 2px; height: auto; min-height: 80px; }
             .date-number { font-size: 14px; margin-bottom: 2px; text-align: center; }
             .assignee { font-size: 11px; padding: 2px 0; margin-bottom: 2px; letter-spacing: -0.5px; }
+            .task { font-size: 11px; padding: 4px 2px; margin-bottom: 2px;}
             
-            /* 打勾任務改為上下排列，節省橫向空間 */
-            .task { font-size: 10px; padding: 2px; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
-            .task input { margin-right: 0; transform: scale(1.1); margin-bottom: 2px;}
-            .task label { display: block; text-align: center; letter-spacing: -0.5px; }
-
-            /* 編輯畫面 */
             .shift-top, .shift-bottom { flex-direction: column; align-items: stretch; gap: 8px; }
             .shift-top input { width: 100%; box-sizing: border-box; margin-bottom: 5px; }
             .shift-bottom label { width: 100%; display: flex; justify-content: space-between; align-items: center; }
             .shift-bottom select { width: 65%; }
             .btn-danger { margin-left: 0 !important; width: 100%; margin-top: 10px; }
         }
-        /* ========= 自訂提示視窗樣式 ========= */
+        
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.4); display: flex;
@@ -100,10 +93,10 @@
     <div class="header">
         <div class="header-title">
             <input type="month" id="view-month" onchange="window.changeViewMonth(this.value)">
-            <h1 style="margin:0; font-size: 28px;">值日表 (ﾉ'ｰ')ﾉ︵ð<span id="archive-status" class="status-badge badge-archive hidden">歷史唯讀</span></h1>
+            <h1 style="margin:0; font-size: 28px;">值日表 (ﾉ'ｰ')ﾉ︵ð<span id="archive-status" class="status-badge badge-archive hidden">歷史報告</span></h1>
         </div>
         <div class="header-buttons">
-            <button id="fetch-archive-btn" class="btn-success" onclick="window.fetchArchiveFromGitHub()">歷史備份</button>
+            <button id="fetch-archive-btn" class="btn-success" onclick="window.fetchArchiveFromGitHub()">歷史報告</button>
             <button id="back-to-live-btn" class="btn-secondary hidden" onclick="window.exitArchiveMode()">回到即時資料</button>
             <button id="edit-btn" onclick="togglePage('edit-page')">編輯</button>
         </div>
@@ -117,6 +110,18 @@
             <tbody id="calendar-body"></tbody>
         </table>
     </div>
+    <div style="margin-top: 20px; padding: 20px; background-color: #f8f9fa; border-radius: 8px; border: 1px solid #dee2e6;">
+        <h3 style="margin-top: 0; color: #2A2D43; font-size: 18px; margin-bottom: 12px;">值日生說明與負責事項</h3>
+        <ol style="margin: 0; padding-left: 20px; color: #444; line-height: 1.8; font-size: 15px;">
+            <li>每週由兩位室友輪值，時間自行跟夥伴協調，不限定哪天處理。</li>
+            <li>如果整週都不在，請提前直接跟別週值日生換班。</li>
+            <li>如果整週過去，兩位值日生都沒有處理，班表就順延一週。</li>
+            <li>立體類回收：每週倒1次。</li>
+            <li>一般類垃圾：廚房垃圾桶、兩個廁所、冰箱中間那區的廚餘、流理台濾網，一共五個地方，全部的垃圾要倒1次。但是廚房垃圾桶最會長果蠅所以每週要替換2個粉紅色垃圾袋。</li>
+            <li>平面類回收：每月第一週倒。</li>
+            <li>處理完回收，請直接在日曆上標註哪天倒了哪種回收。</li>
+        </ol>
+    </div>
 </div>
 
 <div class="container hidden" id="edit-page">
@@ -124,15 +129,8 @@
         <h1 style="font-size: 18px;">編輯值日設定</h1>
         <button class="btn-secondary" onclick="togglePage('view-page')">返回檢視</button>
     </div>
-    
-    <div class="form-group" style="background-color: #e9ecef; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 5px;">
-        <label style="margin: 0;">目前編輯月份：</label>
-        <input type="month" id="edit-month" onchange="window.changeEditMonth(this.value)" style="font-weight: bold; width: 100%; box-sizing: border-box;">
-        <span style="font-size: 12px; color: #555;">(切換月份會自動載入那個月的設定)</span>
-    </div>
 
     <div class="form-group">
-        <label>值日生與當週回收設定：</label>
         <div id="shifts-container"></div>
         <button class="btn-secondary" onclick="addShiftRow()" style="margin-top: 5px; width: 100%;">+ 新增值日區間</button>
     </div>
@@ -141,22 +139,20 @@
     <button onclick="saveSettings()" style="width: 100%; font-size: 18px; margin-top: 10px; padding: 12px;">儲存設定</button>
 </div>
 
-<!-- 引入 Firebase SDK -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
     const firebaseConfig = {
-    apiKey: "AIzaSyCWE7UedT0w9onvfi6TJP7_PCC_2UZ_uGo",
-    authDomain: "trash-schedule-e713d.firebaseapp.com",
-    databaseURL: "https://trash-schedule-e713d-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "trash-schedule-e713d",
-    storageBucket: "trash-schedule-e713d.firebasestorage.app",
-    messagingSenderId: "1012853858651",
-    appId: "1:1012853858651:web:bb5a58cc3420f5f7ccfa7e"
+        apiKey: "AIzaSyCWE7UedT0w9onvfi6TJP7_PCC_2UZ_uGo",
+        authDomain: "trash-schedule-e713d.firebaseapp.com",
+        databaseURL: "https://trash-schedule-e713d-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "trash-schedule-e713d",
+        storageBucket: "trash-schedule-e713d.firebasestorage.app",
+        messagingSenderId: "1012853858651",
+        appId: "1:1012853858651:web:bb5a58cc3420f5f7ccfa7e"
     };
 
-    // 攔截並覆寫瀏覽器預設的 alert 功能
     window.alert = function(message) {
         document.getElementById('custom-alert-message').innerText = message;
         document.getElementById('custom-alert').classList.remove('hidden');
@@ -165,26 +161,21 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    let allData = {}; 
+    let globalSettings = { shifts: [] };
     let currentViewMonth = new Date().toISOString().slice(0, 7);
-    let currentEditMonth = currentViewMonth;
     let isArchiveMode = false;
     let archiveData = {};
 
     document.getElementById('view-month').value = currentViewMonth;
-    document.getElementById('edit-month').value = currentEditMonth;
 
-    onValue(ref(db, 'calendarData'), (snapshot) => {
-        const data = snapshot.val() || {};
-        if (data.settings && !data.months) {
-            const m = data.settings.month || currentViewMonth;
-            if (!data.months) data.months = {};
-            data.months[m] = { settings: data.settings, checkboxes: data.checkboxes || {} };
-        }
-        allData = data.months || {};
+    // 監聽全域的排班設定
+    onValue(ref(db, 'calendarData/settings'), (snapshot) => {
+        globalSettings = snapshot.val() || { shifts: [] };
         if (!isArchiveMode) {
             renderCalendar();
-            fillEditForm();
+            if (!document.getElementById('edit-page').classList.contains('hidden')) {
+                fillEditForm();
+            }
         }
     });
 
@@ -193,8 +184,6 @@
         document.getElementById('edit-page').classList.add('hidden');
         document.getElementById(pageId).classList.remove('hidden');
         if (pageId === 'edit-page') {
-            currentEditMonth = currentViewMonth;
-            document.getElementById('edit-month').value = currentEditMonth;
             fillEditForm();
         }
     };
@@ -206,15 +195,15 @@
         renderCalendar();
     };
 
-    window.changeEditMonth = function(monthStr) {
-        if (!monthStr) return;
-        currentEditMonth = monthStr;
-        fillEditForm();
-    };
-
-    function makeOptions(selectedVal) {
+    // 幫選單產生器加上 allowNone 參數，用來判斷是否要加入「無」的選項
+    function makeOptions(selectedVal, allowNone = false) {
         const days = ['日','一','二','三','四','五','六'];
-        return [1,2,3,4,5,6,0].map(d => `<option value="${d}" ${selectedVal == d ? 'selected' : ''}>星期${days[d]}</option>`).join('');
+        let html = '';
+        if (allowNone) {
+            html += `<option value="-1" ${selectedVal == '-1' ? 'selected' : ''}>不用倒</option>`;
+        }
+        html += [1,2,3,4,5,6,0].map(d => `<option value="${d}" ${selectedVal == d ? 'selected' : ''}>星期${days[d]}</option>`).join('');
+        return html;
     }
 
     window.addShiftRow = function(shift = {}) {
@@ -223,7 +212,7 @@
         const name = shift.name || '';
         const r3d1 = shift.r3d1 || '2'; 
         const r3d2 = shift.r3d2 || '6'; 
-        const rflat = shift.rflat || '5'; 
+        const rflat = shift.rflat || '5'; // 預設星期五，若是無則會是 '-1'
 
         const container = document.getElementById('shifts-container');
         const row = document.createElement('div');
@@ -239,10 +228,12 @@
                 <button class="btn-danger" onclick="this.parentElement.parentElement.remove()">刪除此區間</button>
             </div>
             <div class="shift-bottom">
-                <strong style="color: #0c5460;">本週回收日：</strong>
-                <label>立體-1：<select class="shift-r3d1">${makeOptions(r3d1)}</select></label>
-                <label>立體-2：<select class="shift-r3d2">${makeOptions(r3d2)}</select></label>
-                <label>平面：<select class="shift-rflat">${makeOptions(rflat)}</select></label>
+                <strong style="color: #0c5460;">本區間回收日：</strong>
+                <!-- 立體回收不允許不用倒，allowNone 為 false -->
+                <label>立體-1：<select class="shift-r3d1">${makeOptions(r3d1, false)}</select></label>
+                <label>立體-2：<select class="shift-r3d2">${makeOptions(r3d2, false)}</select></label>
+                <!-- 平面回收允許不用倒，allowNone 為 true -->
+                <label>平面：<select class="shift-rflat">${makeOptions(rflat, true)}</select></label>
             </div>
         `;
         container.appendChild(row);
@@ -251,8 +242,7 @@
     function fillEditForm() {
         const container = document.getElementById('shifts-container');
         container.innerHTML = '';
-        const monthData = allData[currentEditMonth] || {};
-        const shifts = monthData.settings?.shifts || [];
+        const shifts = globalSettings.shifts || [];
         if (shifts.length > 0) { shifts.forEach(shift => window.addShiftRow(shift)); } 
         else { window.addShiftRow(); }
     }
@@ -269,29 +259,13 @@
             if (start && end && name) { shifts.push({ start, end, name, r3d1, r3d2, rflat }); }
         });
 
-        set(ref(db, `calendarData/months/${currentEditMonth}/settings/shifts`), shifts)
+        set(ref(db, `calendarData/settings/shifts`), shifts)
             .then(() => {
-                alert(`${currentEditMonth} 值日設定已儲存`);
-                currentViewMonth = currentEditMonth; 
-                document.getElementById('view-month').value = currentViewMonth;
+                alert(`值日設定已儲存`);
                 if(isArchiveMode) window.exitArchiveMode(false);
                 togglePage('view-page');
             })
             .catch((error) => { alert('儲存失敗：' + error.message); });
-    };
-
-    window.handleCheckboxChange = function(id, checkboxElem) {
-        const isChecked = checkboxElem.checked;
-        if (isArchiveMode) {
-            alert('目前為歷史唯讀模式，無法修改 (ゝ∀･)');
-            checkboxElem.checked = !isChecked; return;
-        }
-        const updates = {};
-        updates[`/calendarData/months/${currentViewMonth}/checkboxes/${id}`] = isChecked;
-        update(ref(db), updates).catch(err => {
-            alert('更新失敗，請檢查網路。');
-            checkboxElem.checked = !isChecked;
-        });
     };
 
     function renderCalendar() {
@@ -299,16 +273,14 @@
         if (!renderMonth) return;
         const [year, month] = renderMonth.split('-');
         
-        const monthData = isArchiveMode ? archiveData : (allData[renderMonth] || {});
-        const shifts = isArchiveMode ? archiveData.shifts : (monthData.settings?.shifts || []);
-        const checkboxes = isArchiveMode ? archiveData.checkboxes : (monthData.checkboxes || {});
+        const shifts = isArchiveMode ? (archiveData.settings?.shifts || []) : (globalSettings.shifts || []);
+        
         const body = document.getElementById('calendar-body');
         body.innerHTML = '';
         const firstDay = new Date(year, month - 1, 1);
         const lastDay = new Date(year, month, 0);
         const daysInMonth = lastDay.getDate();
         
-        // 將星期一轉換為第一天，配合簡化版的表頭 (一, 二, 三, 四, 五, 六, 日)
         let startDayOfWeek = firstDay.getDay() - 1;
         if (startDayOfWeek === -1) startDayOfWeek = 6; 
         let date = 1; let weekCount = 0;
@@ -331,21 +303,14 @@
                     if (assignee) {
                         cellHTML += `<div class="assignee">${assignee.name}</div>`;
                         
-                        // 為了節省手機版空間，把「立體回收」改成「立體」，「平面回收」改成「平面」
-                        if (currentDayOfWeek == assignee.r3d1) {
-                            const taskId = `task-3d-1-${currentDateStr}`;
-                            const isChecked = checkboxes[taskId] ? 'checked' : '';
-                            cellHTML += `<div class="task"><input type="checkbox" id="${taskId}" ${isChecked} onchange="window.handleCheckboxChange('${taskId}', this)"><label for="${taskId}">立體</label></div>`;
+                        // 立體回收判定
+                        if (currentDayOfWeek == assignee.r3d1 || currentDayOfWeek == assignee.r3d2) {
+                            cellHTML += `<div class="task">立體</div>`;
                         }
-                        if (currentDayOfWeek == assignee.r3d2) {
-                            const taskId = `task-3d-2-${currentDateStr}`;
-                            const isChecked = checkboxes[taskId] ? 'checked' : '';
-                            cellHTML += `<div class="task"><input type="checkbox" id="${taskId}" ${isChecked} onchange="window.handleCheckboxChange('${taskId}', this)"><label for="${taskId}">立體</label></div>`;
-                        }
-                        if (currentDayOfWeek == assignee.rflat) {
-                            const taskId = `task-flat-${currentDateStr}`;
-                            const isChecked = checkboxes[taskId] ? 'checked' : '';
-                            cellHTML += `<div class="task"><input type="checkbox" id="${taskId}" ${isChecked} onchange="window.handleCheckboxChange('${taskId}', this)"><label for="${taskId}">平面</label></div>`;
+                        
+                        // 平面回收判定 (加上條件：只有在 rflat 不是 '-1' 時才顯示)
+                        if (assignee.rflat !== '-1' && currentDayOfWeek == assignee.rflat) {
+                            cellHTML += `<div class="task">平面</div>`;
                         }
                     }
                     td.innerHTML = cellHTML; date++;
@@ -358,17 +323,17 @@
 
     window.fetchArchiveFromGitHub = async function() {
         const monthStr = document.getElementById('view-month').value;
-        if (!monthStr) return alert('請先選擇您要查看的月份');
+        if (!monthStr) return alert('請先選擇要查看的月份');
 
         try {
             const response = await fetch(`./archives/${monthStr}_backup.json`);
             if (!response.ok) {
-                throw new Error(`找不到 ${monthStr} 的備份檔案( ´･ω)`);
+                throw new Error(`找不到 ${monthStr} 的歷史報告檔案 ( ´･ω)`);
             }
             const archive = await response.json();
             
             isArchiveMode = true;
-            archiveData = { month: archive.month, shifts: archive.settings?.shifts || [], checkboxes: archive.checkboxes || {} };
+            archiveData = { month: archive.month, settings: archive.settings || {} };
             
             document.getElementById('archive-status').classList.remove('hidden');
             document.getElementById('back-to-live-btn').classList.remove('hidden');
@@ -376,7 +341,7 @@
             document.getElementById('fetch-archive-btn').classList.add('hidden');
             
             renderCalendar();
-            alert(`成功載入 ${archive.month} 的歷史備份\n(ゝ∀･)b`);
+            alert(`成功載入 ${archive.month} 的歷史報告！`);
         } catch (err) {
             alert(err.message);
         }
@@ -392,8 +357,8 @@
         if(doRender) renderCalendar();
     };
 </script>
+
 </body>
-<!-- 自訂的提示視窗 -->
 <div id="custom-alert" class="modal-overlay hidden">
     <div class="modal-box">
         <div id="custom-alert-message" class="modal-message"></div>

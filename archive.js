@@ -13,29 +13,28 @@ admin.initializeApp({
 const db = admin.database();
 
 async function archiveData() {
-  // 取得「上個月」的年月字串
+  // 取得「上個月」的年月字串作為檔名與標記
   const today = new Date();
   today.setMonth(today.getMonth() - 1);
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, '0');
   const lastMonthStr = `${year}-${month}`;
 
-  console.log(`開始備份 ${lastMonthStr} 的資料...`);
+  console.log(`開始備份 ${lastMonthStr} 的排班設定快照...`);
 
-  // 因為架構升級，我們只要直接去抓上個月專屬的資料節點即可
-  const snapshot = await db.ref(`calendarData/months/${lastMonthStr}`).once('value');
-  const monthData = snapshot.val();
+  // 因為改成全域排班，我們直接抓取 settings 節點的當前狀態
+  const snapshot = await db.ref(`calendarData/settings`).once('value');
+  const settings = snapshot.val();
 
-  if (!monthData) {
-      console.log(`資料庫中找不到 ${lastMonthStr} 的資料！`);
+  if (!settings) {
+      console.log(`目前資料庫沒有任何排班設定！`);
       process.exit(0);
   }
 
-  // 組合備份檔案格式
+  // 組合備份檔案，把當時的完整排班規則封裝起來
   const backupData = {
       month: lastMonthStr,
-      settings: monthData.settings || {},
-      checkboxes: monthData.checkboxes || {}
+      settings: settings
   };
 
   const dir = path.join(__dirname, 'archives');
@@ -45,7 +44,7 @@ async function archiveData() {
 
   const fileName = path.join(dir, `${lastMonthStr}_backup.json`);
   fs.writeFileSync(fileName, JSON.stringify(backupData, null, 2), 'utf8');
-  console.log(`備份成功！已產生 ${lastMonthStr} 的檔案：${fileName}`);
+  console.log(`備份成功！已產生 ${lastMonthStr} 的排班快照：${fileName}`);
 
   process.exit(0);
 }
