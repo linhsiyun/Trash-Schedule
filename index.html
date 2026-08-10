@@ -129,6 +129,14 @@
         <h1 style="font-size: 18px;">編輯值日設定</h1>
         <button class="btn-secondary" onclick="togglePage('view-page')">返回檢視</button>
     </div>
+    
+    <div class="form-group" style="background-color: #e9ecef; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; gap: 10px;">
+        <label style="margin: 0; color: #333;">編輯月份：</label>
+        <div style="display: flex; gap: 10px;">
+            <input type="month" id="edit-filter-month" onchange="window.filterEditShifts()" style="flex: 1; font-weight: bold; box-sizing: border-box;">
+            <button class="btn-secondary" onclick="window.clearEditFilter()" style="white-space: nowrap;">顯示全部</button>
+        </div>
+    </div>
 
     <div class="form-group">
         <div id="shifts-container"></div>
@@ -184,6 +192,7 @@
         document.getElementById('edit-page').classList.add('hidden');
         document.getElementById(pageId).classList.remove('hidden');
         if (pageId === 'edit-page') {
+            document.getElementById('edit-filter-month').value = currentViewMonth;
             fillEditForm();
         }
     };
@@ -245,8 +254,52 @@
         const shifts = globalSettings.shifts || [];
         if (shifts.length > 0) { shifts.forEach(shift => window.addShiftRow(shift)); } 
         else { window.addShiftRow(); }
+        
+        // 資料填寫完畢後，執行畫面篩選
+        window.filterEditShifts();
     }
 
+    window.filterEditShifts = function() {
+        const filterMonth = document.getElementById('edit-filter-month').value;
+        const rows = document.querySelectorAll('.shift-row');
+
+        // 如果沒有選擇月份，就全部顯示
+        if (!filterMonth) {
+            rows.forEach(row => row.style.display = 'block');
+            return;
+        }
+
+        // 計算該月份的開始與結束日期 (例如: 2026-08-01 ~ 2026-08-31)
+        const [year, month] = filterMonth.split('-');
+        const monthStart = `${year}-${month}-01`;
+        const lastDay = new Date(year, month, 0).getDate();
+        const monthEnd = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
+
+        rows.forEach(row => {
+            const start = row.querySelector('.shift-start').value;
+            const end = row.querySelector('.shift-end').value;
+
+            // 新增的空白區間永遠顯示
+            if (!start || !end) {
+                row.style.display = 'block'; 
+            } 
+            // 如果排班區間跟選擇的月份有重疊，就顯示
+            else if (start <= monthEnd && end >= monthStart) {
+                row.style.display = 'block';
+            } 
+            // 完全不在該月份範圍內，就隱藏
+            else {
+                row.style.display = 'none';
+            }
+        });
+    };
+
+    // 清除篩選，顯示所有資料
+    window.clearEditFilter = function() {
+        document.getElementById('edit-filter-month').value = '';
+        window.filterEditShifts();
+    };
+                            
     window.saveSettings = function() {
         const shifts = [];
         document.querySelectorAll('.shift-row').forEach(row => {
